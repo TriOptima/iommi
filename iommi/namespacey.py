@@ -55,7 +55,7 @@ class RefinedNamespace(Namespace):
 )
 class Namespacey:
     namespace: Namespace
-    finalized: bool = False
+    finalized: bool
 
     def __init__(self, namespace=None, **kwargs):
         if namespace is None:
@@ -70,6 +70,7 @@ class Namespacey:
                 namespace.setitem_path(name, kwargs.pop(name))
 
         self.namespace = namespace
+        self.finalized = False
 
     def finalize(self):
         assert not self.finalized, f"{self} already finalized"

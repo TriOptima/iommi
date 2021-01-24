@@ -32,8 +32,8 @@ DEFAULT_STYLE = 'bootstrap'
 
 def get_iommi_style_name(obj: Any) -> str:
     while obj is not None:
-        if obj.iommi_style is not None:
-            return obj.iommi_style
+        if obj.namespace.get('iommi_style') is not None:
+            return obj.namespace.iommi_style
         obj = obj.iommi_parent()
     return getattr(settings, 'IOMMI_DEFAULT_STYLE', DEFAULT_STYLE)
 

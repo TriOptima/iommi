@@ -24,6 +24,7 @@ from iommi.evaluate import (
     evaluate_strict,
     evaluate_strict_container,
 )
+from iommi.namespacey import Namespacey
 from iommi.style import (
     apply_style,
     get_iommi_style_name,
@@ -42,7 +43,7 @@ class PathNotFoundException(Exception):
     pass
 
 
-class Traversable(RefinableObject):
+class Traversable(Namespacey):
     """
     Abstract API for objects that have a place in the iommi path structure.
     You should not need to care about this class as it is an implementation
@@ -60,14 +61,13 @@ class Traversable(RefinableObject):
     _declared_members: Dict[str, 'Traversable']
     _bound_members: Dict[str, 'Traversable']
 
-    @dispatch
     def __init__(self, _name=None, **kwargs):
         self._declared_members = Struct()
         self._bound_members = None
         self._evaluate_parameters = None
         self._name = _name
 
-        super(Traversable, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def __repr__(self):
         n = f'{self._name}' if self._name is not None else ''
@@ -127,10 +127,12 @@ class Traversable(RefinableObject):
             is_root = True
             iommi_style = get_iommi_style_name(self)
 
-        result = apply_style(iommi_style, result, is_root)
         result._declared = self
-
         del self  # to prevent mistakes when changing the code below
+
+        result = apply_style(iommi_style, result, is_root)
+
+        result.finalize()
 
         if parent is None:
             result._request = request

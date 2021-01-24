@@ -100,7 +100,7 @@ def collect_members(container, *, name: str, items_dict: Dict = None, items: Dic
     for k in to_delete:
         del unbound_items[k]
 
-    sort_after(unbound_items)
+    # sort_after(unbound_items)
 
     set_declared_member(container, name, unbound_items)
     setattr(container, name, NotBoundYet(container, name))
