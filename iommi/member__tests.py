@@ -2,6 +2,7 @@ import pytest
 from tri_declarative import (
     declarative,
     dispatch,
+    Namespace,
     Refinable,
 )
 
@@ -24,30 +25,43 @@ from iommi.reinvokable import reinvokable
 
 
 class Fruit(Traversable):
-    @reinvokable
     def __init__(self, taste=None, **kwargs):
         super(Fruit, self).__init__(**kwargs)
         self.taste = taste
 
 
-@declarative(Fruit, 'fruits_dict')
+@declarative(Fruit, 'fruits_dict', add_init_kwargs=False)
 class Basket(Traversable):
 
-    @dispatch
-    def __init__(self, fruits=None, fruits_dict=None, unknown_types_fall_through=False):
-        super(Basket, self).__init__()
-        collect_members(container=self, name='fruits', items=fruits, items_dict=fruits_dict, cls=Fruit, unknown_types_fall_through=unknown_types_fall_through)
+    assets = Refinable()
+    endpoints = Refinable()
+    fruits: Namespace = Refinable()
+
+    def __init__(self, unknown_types_fall_through=False, **kwargs):
+        self.unknown_types_fall_through = unknown_types_fall_through
+        super(Basket, self).__init__(**kwargs)
+
+    def on_finalize(self):
+        collect_members(
+            container=self,
+            name='fruits',
+            items=self.fruits,
+            items_dict=self.get_declared('fruits_dict'),
+            cls=Fruit,
+            unknown_types_fall_through=self.unknown_types_fall_through,
+        )
+        super(Basket, self).on_finalize()
 
     def on_bind(self):
         bind_members(parent=self, name='fruits')
 
 
 def test_empty_collect():
-    assert declared_members(Basket()).fruits == {}
+    assert declared_members(Basket().finalize()).fruits == {}
 
 
 def test_collect_from_arg():
-    basket = Basket(fruits__banana__taste="sweet")
+    basket = Basket(fruits__banana__taste="sweet").finalize()
     assert declared_members(basket).fruits.banana.taste == 'sweet'
 
 
@@ -55,7 +69,7 @@ def test_collect_from_declarative():
     class MyBasket(Basket):
         orange = Fruit(taste='sour')
 
-    basket = MyBasket()
+    basket = MyBasket().finalize()
     assert declared_members(basket).fruits.orange.taste == 'sour'
 
 
@@ -63,7 +77,7 @@ def test_collect_unapplied_config():
     class MyBasket(Basket):
         pear = Fruit()
 
-    basket = MyBasket(fruits__pear__taste='meh')
+    basket = MyBasket(fruits__pear__taste='meh').finalize()
     # noinspection PyUnresolvedReferences
     assert basket._declared_members.fruits.pear.taste == 'meh'
 
@@ -74,7 +88,7 @@ def test_unbound_error():
 
     expected = 'fruits of MyBasket is not bound, look in _declared_members[fruits] for the declared copy of this, or bind first'
 
-    basket = MyBasket()
+    basket = MyBasket().finalize()
     assert repr(basket.fruits) == expected
 
     with pytest.raises(NotBoundYetException) as e:
@@ -227,7 +241,7 @@ def test_forbidden_names():
         iommi_style = Fruit()
 
     with pytest.raises(ForbiddenNamesException) as e:
-        MyBasket()
+        MyBasket().finalize()
 
     assert str(e.value) == 'The names _name, iommi_style are reserved by iommi, please pick other names'
 
@@ -236,7 +250,7 @@ def test_collect_sets_name():
     class MyBasket(Basket):
         orange = Fruit(taste='sour')
 
-    basket = MyBasket()
+    basket = MyBasket().finalize()
     assert declared_members(basket).fruits.orange._name == 'orange'
 
     basket = MyBasket(fruits__orange=Fruit(taste='sour'))
@@ -247,7 +261,7 @@ def test_none_members_should_be_discarded_after_being_allowed_through():
     class MyBasket(Basket):
         orange = Fruit(taste='sour')
 
-    basket = MyBasket(fruits__orange=None)
+    basket = MyBasket(fruits__orange=None).finalize()
     assert 'orange' not in declared_members(basket).fruits
 
 

@@ -87,7 +87,7 @@ def collect_members(container, *, name: str, items_dict: Dict = None, items: Dic
                 unbound_items[key] = item
 
     for k, v in items_of(Namespace(_unapplied_config)):
-        unbound_items[k] = reinvoke(unbound_items[k], v)
+        unbound_items[k] = unbound_items[k].refine(**v)
         # noinspection PyProtectedMember
         assert unbound_items[k]._name is not None
 
@@ -112,6 +112,7 @@ class Members(Traversable):
     @dispatch
     def __init__(self, *, _declared_members, unknown_types_fall_through, **kwargs):
         super(Members, self).__init__(**kwargs)
+        # _declared_members = sort_after(_declared_members)
         self._declared_members = _declared_members
         self._unknown_types_fall_through = unknown_types_fall_through
 

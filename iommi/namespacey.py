@@ -87,9 +87,11 @@ class Namespacey:
         if remaining_namespace:
             available_keys = '\n    '.join(sorted(declared_items.keys()))
             raise TypeError(
-                f"""'{self.__class__.__name__}' object has no refinable attribute(s): {', '.join(sorted(remaining_namespace.keys()))}.
-        Available attributes:
-            {available_keys}""")
+                f"""\
+'{self.__class__.__name__}' object has no refinable attribute(s): {', '.join(sorted(remaining_namespace.keys()))}.
+Available attributes:
+    {available_keys}
+""")
 
         self.finalized = True
 
@@ -102,8 +104,12 @@ class Namespacey:
 
     def refine(self, **args):
         assert not self.finalized, f"{self} already finalized"
-        return type(self)(namespace=RefinedNamespace('refine', self.namespace, **args))
+        # return type(self)(namespace=RefinedNamespace('refine', self.namespace, **args))
+        self.namespace=RefinedNamespace('refine', self.namespace, **args)
+        return self
 
     def refine_defaults(self, **args):
         assert not self.finalized, f"{self} already finalized"
-        return type(self)(namespace=RefinedNamespace('refine defaults', self.namespace, defaults=True, **args))
+        # return type(self)(namespace=RefinedNamespace('refine defaults', self.namespace, defaults=True, **args))
+        self.namespace=RefinedNamespace('refine defaults', self.namespace, defaults=True, **args)
+        return self

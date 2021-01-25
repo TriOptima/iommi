@@ -26,6 +26,7 @@ from iommi.reinvokable import (
     retain_special_cases,
 )
 from ._web_compat import settings
+from .namespacey import Namespacey
 
 DEFAULT_STYLE = 'bootstrap'
 
@@ -46,10 +47,10 @@ def apply_style(style_name: str, obj: Any, is_root) -> Any:
 def apply_style_data(style_data: Namespace, obj: Any) -> Any:
     if not style_data:
         return obj
-    if not is_reinvokable(obj):
+    if not isinstance(obj, Namespacey):
         print(f'Missing out of {style_data} for {type(obj)}')
         return obj
-    return reinvoke_new_defaults(obj, style_data)
+    return obj.refine_defaults(**style_data)
 
 
 def _style_name_for_class(cls):
