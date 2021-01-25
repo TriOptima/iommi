@@ -38,7 +38,6 @@ from iommi.part import (
 from iommi.traversable import (
     EvaluatedRefinable,
 )
-from iommi.reinvokable import reinvokable
 
 # https://html.spec.whatwg.org/multipage/syntax.html#void-elements
 _void_elements = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']
@@ -130,7 +129,6 @@ class Fragment(Part, Tag):
     template: Union[str, Template] = EvaluatedRefinable()
     children = Refinable()
 
-    @reinvokable
     @dispatch(
         tag=None,
         children=EMPTY,

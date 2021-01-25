@@ -15,8 +15,6 @@ from tri_declarative import (
 from tri_struct import Struct
 
 from iommi.base import keys, items
-from iommi.reinvokable import reinvoke
-from iommi.sort_after import sort_after
 from iommi.traversable import (
     declared_members,
     set_declared_member,

@@ -21,10 +21,6 @@ from iommi.base import (
     items,
     keys,
 )
-from iommi.reinvokable import (
-    is_reinvokable,
-    retain_special_cases,
-)
 from ._web_compat import settings
 from .namespacey import Namespacey
 
@@ -154,47 +150,6 @@ def get_style(name):
 
 Available styles:
     {style_names}''') from None
-
-
-def reinvoke_new_defaults(obj: Any, additional_kwargs: Dict[str, Any]) -> Any:
-    assert is_reinvokable(obj), f'reinvoke_new_defaults() called on object with ' \
-                                f'missing @reinvokable constructor decorator: {obj!r}'
-    additional_kwargs_namespace = Namespace(additional_kwargs)
-
-    kwargs = Namespace(additional_kwargs_namespace)
-    for name, saved_param in items(obj._iommi_saved_params):
-        try:
-            new_param = getattr_path(additional_kwargs_namespace, name)
-        except AttributeError:
-            kwargs[name] = saved_param
-        else:
-            if is_reinvokable(saved_param):
-                assert isinstance(new_param, dict)
-                kwargs[name] = reinvoke_new_defaults(saved_param, new_param)
-            else:
-                if isinstance(saved_param, Namespace):
-                    kwargs[name] = Namespace(new_param, saved_param)
-                else:
-                    kwargs[name] = saved_param
-
-    try:
-        call_target = kwargs.pop('call_target', None)
-        if call_target is not None:
-            kwargs['call_target'] = Namespace(
-                call_target,
-                cls=type(obj)
-            )
-        else:
-            kwargs['call_target'] = type(obj)
-
-        result = kwargs()
-    except TypeError as e:
-        raise InvalidStyleConfigurationException(
-            f'Object {obj!r} could not be updated with style configuration {flatten(additional_kwargs_namespace)}'
-        ) from e
-
-    retain_special_cases(obj, result)
-    return result
 
 
 def get_style_data_for_object(style_name, obj, is_root):

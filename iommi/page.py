@@ -32,7 +32,6 @@ from iommi.part import (
     Part,
     PartType,
 )
-from iommi.reinvokable import reinvokable
 from iommi.traversable import (
     EvaluatedRefinable,
     Traversable,
@@ -59,7 +58,6 @@ class Page(Part):
     class Meta:
         member_class = Fragment
 
-    @reinvokable
     @dispatch(
         parts=EMPTY,
         context=EMPTY,

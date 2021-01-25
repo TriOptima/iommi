@@ -53,7 +53,6 @@ from ._web_compat import (
     settings,
     template_types,
 )
-from .reinvokable import reinvokable
 from .sort_after import sort_after
 
 
@@ -72,7 +71,6 @@ class Part(Traversable):
     # Only the assets used by this part
     assets: Namespace = Refinable()
 
-    @reinvokable
     @dispatch(
         extra=EMPTY,
         include=True,

@@ -110,7 +110,6 @@ from iommi.traversable import (
     EvaluatedRefinable,
     evaluated_refinable,
 )
-from iommi.reinvokable import reinvokable
 
 # Prevent django templates from calling That Which Must Not Be Called
 Namespace.do_not_call_in_templates = True
@@ -503,7 +502,6 @@ class Field(Part, Tag):
 
     empty_label: str = EvaluatedRefinable()
 
-    @reinvokable
     @dispatch(
         tag=None,
         attr=MISSING,
@@ -1309,7 +1307,6 @@ class Form(Part):
         action_class = Action
         page_class = Page
 
-    @reinvokable
     @dispatch(
         model=None,
         editable=True,

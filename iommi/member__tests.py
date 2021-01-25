@@ -21,7 +21,6 @@ from iommi.traversable import (
     declared_members,
     Traversable,
 )
-from iommi.reinvokable import reinvokable
 
 
 class Fruit(Traversable):
@@ -162,7 +161,6 @@ def test_ordering():
 
 def test_inclusion():
     class IncludableFruit(Fruit):
-        @reinvokable
         def __init__(self, include=True, **kwargs):
             super(IncludableFruit, self).__init__(**kwargs)
             self.include = include

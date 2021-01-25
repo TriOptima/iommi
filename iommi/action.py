@@ -34,8 +34,6 @@ from iommi.part import Part
 from iommi.traversable import (
     EvaluatedRefinable,
 )
-from iommi.reinvokable import reinvokable
-
 
 @with_meta
 class Action(Fragment):
@@ -209,6 +207,5 @@ class Actions(Members, Tag):
         attrs__class=EMPTY,
         attrs__style=EMPTY,
     )
-    @reinvokable
     def __init__(self, **kwargs):
         super(Actions, self).__init__(**kwargs)

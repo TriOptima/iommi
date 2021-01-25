@@ -68,8 +68,6 @@ from iommi.traversable import (
     set_declared_member,
 )
 from iommi.reinvokable import (
-    reinvokable,
-    reinvoke,
     set_and_remember_for_reinvoke,
 )
 from pyparsing import (
@@ -232,7 +230,6 @@ class Filter(Part):
     is_valid_filter = Refinable()
     query_name = EvaluatedRefinable()
 
-    @reinvokable
     @dispatch(
         query_operator_for_field='=',
         attr=MISSING,
@@ -533,7 +530,6 @@ class Advanced(Fragment):
     @dispatch(
         toggle=EMPTY
     )
-    @reinvokable
     def __init__(self, **kwargs):
         super(Advanced, self).__init__(**kwargs)
 
@@ -587,7 +583,6 @@ class Query(Part):
         member_class = Filter
         form_class = Form
 
-    @reinvokable
     @dispatch(
         endpoints__errors__func=default_endpoint__errors,
         filters=EMPTY,
@@ -726,7 +721,7 @@ class Query(Part):
                     model_field=filter.model_field,
                     help__include=False,
                 )
-                declared_fields[name] = reinvoke(declared_fields[name], field)
+                declared_fields[name] = declared_fields[name].refine(**field)
         set_declared_member(self.form, 'fields', declared_fields)
 
         # Remove fields from the form that correspond to non-included filters

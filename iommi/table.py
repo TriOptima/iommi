@@ -1,8 +1,8 @@
 import csv
 from datetime import (
+    date,
     datetime,
     time,
-    date,
 )
 from enum import (
     auto,
@@ -37,7 +37,6 @@ from django.utils.html import (
     conditional_escape,
 )
 from django.utils.translation import gettext_lazy
-
 from tri_declarative import (
     class_shortcut,
     declarative,
@@ -87,8 +86,8 @@ from iommi.base import (
     keys,
     MISSING,
     model_and_rows,
-    values,
     NOT_BOUND_MESSAGE,
+    values,
 )
 from iommi.endpoint import (
     DISPATCH_PREFIX,
@@ -107,7 +106,6 @@ from iommi.fragment import Tag
 from iommi.from_model import (
     AutoConfig,
     create_members_from_model,
-    get_fields,
     get_search_fields,
     member_from_model,
     NoRegisteredSearchFieldException,
@@ -124,7 +122,6 @@ from iommi.part import render_root
 from iommi.query import (
     Q_OPERATOR_BY_QUERY_OPERATOR,
     Query,
-    QueryException,
 )
 from iommi.traversable import (
     declared_members,
@@ -135,11 +132,8 @@ from iommi.traversable import (
 )
 from ._db_compat import base_defaults_factory
 from .reinvokable import (
-    reinvokable,
-    reinvoke,
     set_and_remember_for_reinvoke,
 )
-from ._web_compat import settings
 
 LAST = LAST
 
@@ -359,7 +353,6 @@ class Column(Part):
     data_retrieval_method = EvaluatedRefinable()
     render_column: bool = EvaluatedRefinable()
 
-    @reinvokable
     @dispatch(
         attr=MISSING,
         sort_default_desc=False,
@@ -410,11 +403,14 @@ class Column(Part):
         :param render_column: If set to `False` the column won't be rendered in the table, but still be available in `table.columns`. This can be useful if you want some other feature from a column like filtering.
         """
 
-        super(Column, self).__init__(header=HeaderColumnConfig(**header), **kwargs)
+        super(Column, self).__init__(**kwargs)
 
+    def on_finalize(self):
+        self.header = HeaderColumnConfig(**self.header)
         self.is_sorting: bool = None
         self.sort_direction: str = None
         self.table = None
+        super(Column, self).on_finalize()
 
     def __html__(self, *, render=None):
         assert False, "This is implemented just to make linting happy that we've implemented all abstract methods. Don't call this!"  # pragma: no cover
@@ -1164,12 +1160,14 @@ class Paginator(Traversable):
                                                                   (paginator.min_page_size - 1))) / paginator.page_size),
         slice=lambda top, bottom, rows, **_: rows[bottom:top],
     )
-    @reinvokable
     def __init__(self, **kwargs):
         super(Paginator, self).__init__(**kwargs)
+
+    def on_finalize(self):
         self.context = None
         self.page_size = None
         self.rows = None
+        super(Paginator, self).on_finalize()
 
     def on_bind(self) -> None:
         request = self.get_request()
@@ -1446,7 +1444,6 @@ class Table(Part, Tag):
     def post_bulk_edit(table, queryset, updates, **_):
         pass
 
-    @reinvokable
     @dispatch(
         columns=EMPTY,
         bulk_filter={},
@@ -1819,7 +1816,7 @@ class Table(Part, Tag):
                 filter = Namespace(
                     field__display_name=lambda table, field, **_: table.columns[field._name].display_name,
                 )
-                declared_filters[name] = reinvoke(declared_filters[name], filter)
+                declared_filters[name] = declared_filters[name].refine(**filter)
         set_declared_member(self.query, 'filters', declared_filters)
 
         self.query = self.query.bind(parent=self)
@@ -1839,7 +1836,7 @@ class Table(Part, Tag):
                     column.bulk,
                     display_name=lambda table, field, **_: table.columns[field._name].display_name,
                 )
-                declared_fields[name] = reinvoke(declared_fields[name], field)
+                declared_fields[name] = declared_fields[name].refine(**field)
         set_declared_member(self.bulk, 'fields', declared_fields)
 
         self.bulk = self.bulk.bind(parent=self)
