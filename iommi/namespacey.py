@@ -8,7 +8,7 @@ from tri_declarative.refinable import is_refinable_function
 
 
 class RefinedNamespace(Namespace):
-    __iommi_refined_delta: str
+    __iommi_refined_description: str
     __iommi_refined_parent: Namespace
     __iommi_refined_delta: Namespace
     __iommi_refined_defaults: bool
