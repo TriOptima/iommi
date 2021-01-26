@@ -1,11 +1,17 @@
 import pytest
 from tri_declarative import (
+    class_shortcut,
     declarative,
-    dispatch,
     Namespace,
     Refinable,
 )
 
+from iommi import (
+    html,
+    Page,
+    register_style,
+    Style,
+)
 from iommi.base import (
     items,
     keys,
@@ -14,9 +20,10 @@ from iommi.base import (
 from iommi.member import (
     bind_members,
     collect_members,
-    NotBoundYetException,
     ForbiddenNamesException,
+    NotBoundYetException,
 )
+from iommi.style import unregister_style
 from iommi.traversable import (
     declared_members,
     Traversable,
@@ -24,16 +31,13 @@ from iommi.traversable import (
 
 
 class Fruit(Traversable):
-    def __init__(self, taste=None, **kwargs):
-        super(Fruit, self).__init__(**kwargs)
-        self.taste = taste
+    taste = Refinable()
 
 
 @declarative(Fruit, 'fruits_dict', add_init_kwargs=False)
 class Basket(Traversable):
 
-    assets = Refinable()
-    endpoints = Refinable()
+
     fruits: Namespace = Refinable()
 
     def __init__(self, unknown_types_fall_through=False, **kwargs):
@@ -52,7 +56,7 @@ class Basket(Traversable):
         super(Basket, self).on_finalize()
 
     def on_bind(self):
-        bind_members(parent=self, name='fruits')
+        bind_members(parent=self, name='fruits', lazy=False)
 
 
 def test_empty_collect():
@@ -161,9 +165,7 @@ def test_ordering():
 
 def test_inclusion():
     class IncludableFruit(Fruit):
-        def __init__(self, include=True, **kwargs):
-            super(IncludableFruit, self).__init__(**kwargs)
-            self.include = include
+        include = Refinable()
 
     class MyBasket(Basket):
         banana = IncludableFruit()
@@ -181,11 +183,11 @@ def test_unapplied_config_does_not_remember_simple():
     from iommi import Page
     from iommi import html
 
-    class Admin(Page):
+    class MyPage(Page):
         link = html.a('Admin')
 
-    a = Admin(parts__link__attrs__href='#foo#').bind()
-    b = Admin().bind()
+    a = MyPage(parts__link__attrs__href='#foo#').bind()
+    b = MyPage().bind()
     assert '#foo#' in a.__html__()
     assert '#foo#' not in b.__html__()
 
@@ -194,13 +196,70 @@ def test_unapplied_config_does_not_remember():
     from iommi import Page
     from iommi import html
 
-    class Admin(Page):
+    class MyPage(Page):
         header = html.h1(children__link=html.a('Admin'))
 
-    a = Admin(parts__header__children__link__attrs__href='#foo#').bind()
-    b = Admin().bind()
+    a = MyPage(parts__header__children__link__attrs__href='#foo#').bind()
+    b = MyPage().bind()
     assert '#foo#' in a.__html__()
     assert '#foo#' not in b.__html__()
+
+
+@pytest.fixture
+def foo_style():
+    register_style('precedence', Style(Page__parts__foo=html.div('from style')))
+    yield
+    unregister_style('precedence')
+
+
+def test_precedence(foo_style):
+    class MyPage(Page):
+        class Meta:
+            iommi_style = 'precedence'
+
+    assert str(MyPage().bind()) == '<div>from style</div>'
+
+
+def test_precedence_override_style(foo_style):
+    class MyPage(Page):
+        foo = html.div('from declaration')
+
+        class Meta:
+            iommi_style = 'precedence'
+
+    assert str(MyPage().bind()) == '<div>from declaration</div>'
+    assert str(MyPage.shortcut(parts__foo=html.div('from constructor call')).bind()) == '<div>from constructor call</div>'
+
+
+def test_precedence_override_meta(foo_style):
+    class MyPage(Page):
+        foo = html.div('from declaration')
+
+        class Meta:
+            iommi_style = 'precedence'
+            parts__foo = html.div('from class Meta')
+
+    assert str(MyPage().bind()) == '<div>from class Meta</div>'
+    assert str(MyPage(parts__foo=html.div('from constructor call')).bind()) == '<div>from constructor call</div>'
+
+
+def test_precedence_override_shortcut(foo_style):
+    class MyPage(Page):
+        foo = html.div('from declaration')
+
+        class Meta:
+            iommi_style = 'precedence'
+
+        @classmethod
+        @class_shortcut(
+            parts__foo=html.div('from shortcut')
+        )
+        def shortcut(cls, call_target, **kwargs):
+            return call_target(**kwargs)
+
+    assert str(MyPage.shortcut().bind()) == '<div>from shortcut</div>'
+
+    assert str(MyPage.shortcut(parts__foo=html.div('from constructor call')).bind()) == '<div>from constructor call</div>'
 
 
 def test_lazy_bind():

@@ -57,6 +57,8 @@ class Traversable(Namespacey):
     context = None
 
     iommi_style: str = Refinable()
+    assets = Refinable()
+    endpoints = Refinable()
 
     _declared_members: Dict[str, 'Traversable']
     _bound_members: Dict[str, 'Traversable']

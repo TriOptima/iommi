@@ -111,5 +111,5 @@ Available attributes:
     def refine_defaults(self, **args):
         assert not self.finalized, f"{self} already finalized"
         # return type(self)(namespace=RefinedNamespace('refine defaults', self.namespace, defaults=True, **args))
-        self.namespace=RefinedNamespace('refine defaults', self.namespace, defaults=True, **args)
+        self.namespace = RefinedNamespace('refine defaults', self.namespace, defaults=True, **args)
         return self
